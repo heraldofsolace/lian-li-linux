@@ -147,6 +147,10 @@
 
             install -Dm644 packaging/udev/60-lianli.rules \
               $out/lib/udev/rules.d/60-lianli.rules
+            # NixOS has no FHS /bin; point the EVDI RUN+= rule at the real
+            # coreutils store path instead.
+            substituteInPlace $out/lib/udev/rules.d/60-lianli.rules \
+              --replace-fail "/bin/chmod" "${pkgs.coreutils}/bin/chmod"
 
             install -Dm644 packaging/sysusers.d/lianli.conf \
               $out/lib/sysusers.d/lianli.conf
