@@ -151,6 +151,13 @@
             # coreutils store path instead.
             substituteInPlace $out/lib/udev/rules.d/60-lianli.rules \
               --replace-fail "/bin/chmod" "${pkgs.coreutils}/bin/chmod"
+            # The hermes-kms lines also invoke the "uaccess" builtin
+            # explicitly; recent systemd doesn't register it under that
+            # name any more and udevadm verify rejects it. TAG+="uaccess"
+            # (already on both lines, and the only mechanism every other
+            # rule in this file relies on) is sufficient on its own.
+            substituteInPlace $out/lib/udev/rules.d/60-lianli.rules \
+              --replace-fail ', RUN{builtin}+="uaccess"' ""
 
             install -Dm644 packaging/sysusers.d/lianli.conf \
               $out/lib/sysusers.d/lianli.conf
