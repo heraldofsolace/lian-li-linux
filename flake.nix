@@ -57,6 +57,19 @@
           hash = "sha256-8bDefNdKO9bLJzENY1OEap7tTSzI7C/oUECgXBJSiEE=";
         };
 
+        # lianli-shared's font lookup (used for LCD sensor-gauge text) shells
+        # out to `fc-match`/`fc-list`, and lianli-media/lianli-control shell
+        # out to `ffmpeg`/`ffprobe` for video probing and decoding — none of
+        # these are linked libraries, so they need to be on PATH at runtime.
+        # There's also no host fontconfig config on NixOS by default, so
+        # ship a self-contained one that can actually resolve a sans-serif
+        # font (falling back to DejaVu otherwise fails with "No system font
+        # found").
+        fontsConf = pkgs.makeFontsConf {
+          fontDirectories = [ pkgs.dejavu_fonts ];
+        };
+        runtimePath = lib.makeBinPath [ pkgs.ffmpeg pkgs.fontconfig pkgs.kmod ];
+
         # The Tauri GUI embeds a Vue/Vite frontend. `src-tauri/build.rs`
         # refuses to invoke `npm` itself unless the checked-in sources and
         # `dist/` output diverge from `dist/.lianli-build.json`, so the
@@ -195,6 +208,16 @@
               $out/share/licenses/lian-li-linux/tinyuz-LICENSE
             install -Dm644 vendor/HDiffPatch/LICENSE \
               $out/share/licenses/lian-li-linux/HDiffPatch-LICENSE
+          '';
+
+          # Runs after wrapGAppsHook3 has already wrapped these binaries;
+          # wrapProgram extends an existing wrapper rather than replacing it.
+          postFixup = ''
+            for bin in lianli-daemon lianli-gui lianli-session lianli-control; do
+              wrapProgram "$out/bin/$bin" \
+                --prefix PATH : "${runtimePath}" \
+                --set FONTCONFIG_FILE "${fontsConf}"
+            done
           '';
 
           meta = with lib; {
