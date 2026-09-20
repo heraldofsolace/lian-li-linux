@@ -276,5 +276,11 @@
         config.services.lianli-linux.package =
           lib.mkDefault self.packages.${pkgs.system}.default;
       };
+
+      homeManagerModules.default = { pkgs, lib, ... }: {
+        imports = [ ./packaging/home-manager/module.nix ];
+        config.services.lianli-linux.package =
+          lib.mkDefault self.packages.${pkgs.system}.default;
+      };
     };
 }
