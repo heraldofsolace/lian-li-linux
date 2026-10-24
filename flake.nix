@@ -80,8 +80,7 @@
           inherit version;
           src = ./crates/lianli-gui;
 
-          npmDepsFetcherVersion = 2;
-          npmDepsHash = "sha256-dZNQsibswi0Urn4qW6foUKzBTZXHG0WplpSkm2y7RT0=";
+          npmDepsHash = "sha256-6+WMse808NX/8ptP6U0RGgVNaqD1rnLseRkAfxksteM=";
 
           npmBuildScript = "build";
 
@@ -160,10 +159,13 @@
 
             install -Dm644 packaging/udev/60-lianli.rules \
               $out/lib/udev/rules.d/60-lianli.rules
-            # NixOS has no FHS /bin; point the EVDI RUN+= rule at the real
-            # coreutils store path instead.
+            # NixOS has no FHS /bin (no /bin/sh, no /bin/chmod); drop the
+            # EVDI RUN+= rule's shell wrapper and point it straight at the
+            # real coreutils store path instead.
             substituteInPlace $out/lib/udev/rules.d/60-lianli.rules \
-              --replace-fail "/bin/chmod" "${pkgs.coreutils}/bin/chmod"
+              --replace-fail \
+                "/bin/sh -c 'exec chmod 0666 /sys/devices/evdi/add'" \
+                "${pkgs.coreutils}/bin/chmod 0666 /sys/devices/evdi/add"
             # The hermes-kms lines also invoke the "uaccess" builtin
             # explicitly; recent systemd doesn't register it under that
             # name any more and udevadm verify rejects it. TAG+="uaccess"
